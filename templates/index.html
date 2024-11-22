@@ -126,6 +126,8 @@
                             .then(data => {
                                 const logContainer = document.getElementById('log-container');
                                 logContainer.innerHTML += `<p>Transcription: ${data.transcription}</p>`;
+                                console.log('Transcription:', data.transcription); // Debugging
+                                processTranscription(data.transcription);
                             });
 
                             audioChunks = [];
@@ -133,6 +135,55 @@
                     });
             }
         });
+
+        function processTranscription(transcription) {
+            const logContainer = document.getElementById('log-container');
+            const rooms = ['living room', 'kitchen', 'bedroom', 'bathroom', 'all'];
+            const actions = ['on', 'off'];
+            console.log('Transcription in process:', transcription); // Debugging
+
+            rooms.forEach(room => {
+                actions.forEach(action => {
+                    if (transcription.toLowerCase().includes(`${room}`) && transcription.toLowerCase().includes(`${action}`)) {
+                        console.log(`Found command: ${room} ${action}`); // Debugging
+                        if (room === 'all') {
+                            document.querySelectorAll('.room').forEach(roomElement => {
+                                const light = roomElement.querySelector('.light');
+                                if (light) {
+                                    if (action === 'on') {
+                                        light.style.display = 'block';
+                                        logContainer.innerHTML += `<p>All rooms light turned on</p>`;
+                                    } else if (action === 'off') {
+                                        light.style.display = 'none';
+                                        logContainer.innerHTML += `<p>All rooms light turned off</p>`;
+                                    }
+                                } else {
+                                    console.error(`Light element not found in ${room}`);
+                                }
+                            });
+                        } else {
+                            const roomElement = Array.from(document.querySelectorAll('.room')).find(el => el.querySelector('.room-name').innerText.toLowerCase() === room);
+                            if (roomElement) {
+                                const light = roomElement.querySelector('.light');
+                                if (light) {
+                                    if (action === 'on') {
+                                        light.style.display = 'block';
+                                        logContainer.innerHTML += `<p>${room.charAt(0).toUpperCase() + room.slice(1)} light turned on</p>`;
+                                    } else if (action === 'off') {
+                                        light.style.display = 'none';
+                                        logContainer.innerHTML += `<p>${room.charAt(0).toUpperCase() + room.slice(1)} light turned off</p>`;
+                                    }
+                                } else {
+                                    console.error(`Light element not found in ${room}`);
+                                }
+                            } else {
+                                console.error(`Room element not found for ${room}`);
+                            }
+                        }
+                    }
+                });
+            });
+        }
 
         document.querySelectorAll('.light-btn').forEach(function(button) {
             button.addEventListener('click', function() {
