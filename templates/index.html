@@ -51,6 +51,14 @@
             left: 50%;
             transform: translateX(-50%);
         }
+        .log-container {
+            width: 420px; /* Same width as two rooms */
+            border: 1px solid #000;
+            margin-top: 20px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -78,21 +86,62 @@
                 <button class="light-btn">Toggle Light</button>
             </div>
         </div>
+        <div class="log-container" id="log-container">
+            <h3>Action Log</h3>
+        </div>
     </div>
 
     <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
         document.getElementById('record-btn').addEventListener('click', function() {
-            alert('Recording audio...');
-            // Add your audio recording logic here
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                this.innerText = 'Record Audio';
+            } else {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        mediaRecorder = new MediaRecorder(stream);
+                        mediaRecorder.start();
+                        this.innerText = 'Stop Recording';
+
+                        mediaRecorder.ondataavailable = event => {
+                            audioChunks.push(event.data);
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                            const formData = new FormData();
+                            formData.append('audio', audioBlob, 'recording.mp3');
+
+                            fetch('/upload', {
+                                method: 'POST',
+                                body: formData
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                const logContainer = document.getElementById('log-container');
+                                logContainer.innerHTML += `<p>Transcription: ${data.transcription}</p>`;
+                            });
+
+                            audioChunks = [];
+                        };
+                    });
+            }
         });
 
         document.querySelectorAll('.light-btn').forEach(function(button) {
             button.addEventListener('click', function() {
                 const light = this.previousElementSibling;
+                const roomName = this.parentElement.querySelector('.room-name').innerText;
+                const logContainer = document.getElementById('log-container');
                 if (light.style.display === 'none' || light.style.display === '') {
                     light.style.display = 'block';
+                    logContainer.innerHTML += `<p>${roomName} light turned on</p>`;
                 } else {
                     light.style.display = 'none';
+                    logContainer.innerHTML += `<p>${roomName} light turned off</p>`;
                 }
             });
         });
