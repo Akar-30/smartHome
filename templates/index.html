@@ -94,14 +94,17 @@
     <script>
         let mediaRecorder;
         let audioChunks = [];
+        let mediaStream;
 
         document.getElementById('record-btn').addEventListener('click', function() {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
+                mediaStream.getTracks().forEach(track => track.stop());
                 this.innerText = 'Record Audio';
             } else {
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(stream => {
+                        mediaStream = stream;
                         mediaRecorder = new MediaRecorder(stream);
                         mediaRecorder.start();
                         this.innerText = 'Stop Recording';

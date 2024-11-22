@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify # type: ignore
 import assemblyai as aai
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 
 app = Flask(__name__)
 
